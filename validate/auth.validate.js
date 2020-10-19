@@ -109,7 +109,7 @@ exports.postCreateRoom = (req, res, next) => {
 			return res.status(403).send({
 				success: false,
 				error: {
-					message: 'Input is empty.',
+					message: 'Dữ liệu rỗng.',
 				},
 			});
 		} else {

@@ -16,16 +16,18 @@ const refreshTokenSecret =
 	process.env.REFRESH_TOKEN_SECRET || 'refresh-token-secret-@dtrongphuc';
 const refreshTokenLife = process.env.REFRESH_TOKEN_LIFE || '3650days';
 
-let createBill = async (username, roomID, month, year) => {
+let createBill = async (username, roomId, month, year) => {
 	try {
-		let user = await User.findOne({ username: username }, '_id');
-		await Bill.create({
-			user: user._id,
-			room: roomID,
-			month: month,
-			year: year,
-			expense: 0,
-		});
+		let user = await User.findOne({ username });
+		if (user) {
+			await Bill.create({
+				user: user._id,
+				room: roomId,
+				month: month,
+				year: year,
+				expense: 0,
+			});
+		}
 	} catch (error) {
 		throw new error(error);
 	}
@@ -128,8 +130,10 @@ let login = async (req, res) => {
 							//secure: true,
 							//domain: process.env.DOMAIN,
 						});
-
-						return res.status(200).json(decoded);
+						return res.status(200).json({
+							success: true,
+							user: { ...decoded },
+						});
 					}
 				);
 			})
@@ -151,30 +155,33 @@ let login = async (req, res) => {
 
 let register = async (req, res) => {
 	try {
-		let username = req.body.username;
-		let password = req.body.password;
-		let realName = req.body.realname;
+		const { username, password, realname } = req.body;
 
 		let hashPassword = bcrypt.hashSync(password, 10);
 
 		await User.create({
-			username: username,
+			username,
+			realname,
 			password: hashPassword,
-			realname: realName,
 		});
 
+		let user = await User.findOne({ username }, '-password');
+
 		return res.status(200).send({
+			user: {
+				...user.toObject(),
+				room: '',
+			},
 			success: true,
-			user: username,
 			error: {
-				messeage: 'Create user successful.',
+				messeage: 'Đăng ký thành công.',
 			},
 		});
 	} catch (error) {
 		return res.status(403).send({
 			success: false,
 			error: {
-				messeage: error || 'Error while create new user.',
+				messeage: error || 'Đã có lỗi xảy ra.',
 			},
 		});
 	}
@@ -182,8 +189,7 @@ let register = async (req, res) => {
 
 let joinRoom = (req, res) => {
 	try {
-		let username = req.body.username;
-		let roomCode = req.body.code;
+		const { username, roomCode } = req.body;
 
 		Room.findOne({ code: roomCode }).then(async (room) => {
 			if (!room) {
@@ -226,13 +232,11 @@ let joinRoom = (req, res) => {
 
 let createRoom = async (req, res) => {
 	try {
-		let username = req.body.username;
-		let roomName = req.body.roomName;
-		let price = req.body.price;
-		let memberCount = 1;
-		let otherPrice = req.body.otherPrice;
+		const { username, roomName, price, otherPrice } = req.body;
+
 		let roomCode;
 		let isMatch;
+
 		do {
 			roomCode = randomize('0', 10);
 			isMatch = await Room.findOne({ code: roomCode }).exec();
@@ -242,7 +246,7 @@ let createRoom = async (req, res) => {
 			name: roomName,
 			code: roomCode,
 			price: price,
-			memberCount: memberCount,
+			memberCount: 1,
 			otherPrice: otherPrice,
 		});
 		const newRoom = await room.save();
@@ -255,7 +259,7 @@ let createRoom = async (req, res) => {
 			);
 
 			User.findOneAndUpdate(
-				{ username: username },
+				{ username },
 				{ room: newRoom._id },
 				{ useFindAndModify: false }
 			).then(() => {
@@ -263,7 +267,12 @@ let createRoom = async (req, res) => {
 			});
 		}
 	} catch (error) {
-		return res.status(500).json(error);
+		return res.status(500).send({
+			success: false,
+			error: {
+				message: 'Có lỗi xảy ra.',
+			},
+		});
 	}
 };
 
