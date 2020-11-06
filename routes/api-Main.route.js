@@ -1,20 +1,23 @@
-const express = require("express");
+const express = require('express');
 var Router = express.Router();
 
-const mainController = require("../controllers/main.controller");
-const mainValidate = require("../validate/main.validate");
-const authMiddleware = require("../middleware/auth.middleware");
+const mainController = require('../controllers/main.controller');
+const mainValidate = require('../validate/main.validate');
+const authMiddleware = require('../middleware/auth.middleware');
 
 let initAPIs = (app) => {
 	Router.use(authMiddleware.isAuth);
-	Router.get("/get/all?:month?:year", mainController.getAll);
+	Router.get('/get/room?:id', mainController.getRoomInfo);
+	Router.get('/get/members/room?:id', mainController.getMembers);
+	Router.get('/get/expense?:month?:year?:id', mainController.getExpense);
+	Router.get('/get/all?:month?:year', mainController.getAll);
 	Router.post(
-		"/add/purchase",
-		mainValidate.postPurchase,
-		mainController.postPurchase
+		'/add/product',
+		mainValidate.postProduct,
+		mainController.postProduct
 	);
-	Router.post("/delete/purchase", mainController.deletePurchase);
-	return app.use("/api", Router);
+	Router.post('/delete/product', mainController.deleteProduct);
+	return app.use('/api', Router);
 };
 
 module.exports = initAPIs;

@@ -5,7 +5,7 @@ const Room = require('../models/room.model');
 const Purchase = require('../models/purchase.model');
 const Bill = require('../models/bill.model');
 
-let postPurchase = async (req, res) => {
+let postProduct = async (req, res) => {
 	const {
 		userID,
 		productName,
@@ -17,7 +17,6 @@ let postPurchase = async (req, res) => {
 
 	try {
 		let user = await User.findById(userID);
-
 		let date = productDate.split('-');
 		let year = Number.parseInt(date[0]);
 		let month = Number.parseInt(date[1]);
@@ -51,14 +50,14 @@ let postPurchase = async (req, res) => {
 };
 
 let updateBill = async (id, expense, room, month, year) => {
-	let bill = await Bill.find({
+	let bill = await Bill.findOne({
 		user: mongoose.Types.ObjectId(id),
 		room: mongoose.Types.ObjectId(room),
 		month: parseInt(month),
 		year: parseInt(year),
 	});
 
-	if (bill.length) {
+	if (!bill) {
 		await Bill.create({
 			user: mongoose.Types.ObjectId(id),
 			room: mongoose.Types.ObjectId(room),
@@ -67,8 +66,9 @@ let updateBill = async (id, expense, room, month, year) => {
 			expense: expense,
 		});
 	} else {
+		console.log(bill);
 		await Bill.updateOne(
-			{ _id: bill[0]._id },
+			{ _id: bill._id },
 			{ $inc: { expense: +expense } }
 		);
 	}
@@ -115,12 +115,6 @@ let getHistory = async (userID, month, year) => {
 		})
 	);
 	return data;
-};
-
-let getRoomMembers = async (req, res) => {
-	const id = req.body.roomID;
-
-	await Room.findOne({ _id: id });
 };
 
 let getAll = async (req, res) => {
@@ -215,7 +209,7 @@ let getAll = async (req, res) => {
 	}
 };
 
-let deletePurchase = async (req, res) => {
+let deleteProduct = async (req, res) => {
 	try {
 		let id = req.body._id;
 		let purchase = await Purchase.findById({ _id: id });
@@ -246,9 +240,116 @@ let deletePurchase = async (req, res) => {
 	}
 };
 
+let getRoomInfo = async (req, res) => {
+	const { id } = req.query;
+	try {
+		if (!id) {
+			throw new Error('Không có id được cung cấp');
+		}
+		let room = await Room.findById(id);
+		if (!room) {
+			return res.status(404).send({
+				success: false,
+				errors: {
+					message: 'ID phòng không hợp lệ.',
+				},
+			});
+		}
+		return res.status(200).send({
+			success: true,
+			room,
+		});
+	} catch (error) {
+		return res.status(404).send({
+			success: false,
+			errors: {
+				message: 'ID phòng không hợp lệ.',
+			},
+		});
+	}
+};
+
+let getMembers = async (req, res) => {
+	const { id } = req.query;
+	try {
+		if (!id) {
+			throw new Error('Không có id được cung cấp');
+		}
+		let room = await Room.findById(id);
+		if (!room) {
+			return res.status(404).send({
+				success: false,
+				errors: {
+					message: 'ID phòng không hợp lệ.',
+				},
+			});
+		}
+
+		let members = await User.find({ room: room._id }, '_id realname');
+		return res.status(200).send({
+			success: true,
+			members,
+		});
+	} catch (error) {
+		return res.status(404).send({
+			success: false,
+			errors: {
+				message: 'ID phòng không hợp lệ.',
+			},
+		});
+	}
+};
+
+let getExpense = async (req, res) => {
+	const { id, month, year } = req.query;
+	try {
+		if (!id) {
+			throw new Error('Không có id được cung cấp');
+		}
+		let room = await Room.findById(id);
+		if (!room) {
+			return res.status(404).send({
+				success: false,
+				errors: {
+					message: 'ID phòng không hợp lệ.',
+				},
+			});
+		}
+
+		let members = await User.find({ room: room._id }, '_id');
+
+		let expense = await members.reduce(async (total, ofMember) => {
+			let t = await total;
+
+			let bill = await Bill.findOne({
+				user: ofMember._id,
+				room: room._id,
+				month: +month,
+				year: +year,
+			});
+			return t + bill ? bill.expense : 0;
+		}, Promise.resolve(0));
+
+		return res.status(200).json({
+			success: true,
+			expense,
+		});
+	} catch (error) {
+		return res.status(404).json({
+			success: false,
+			errors: {
+				message: error,
+			},
+		});
+	}
+};
+
 module.exports = {
-	getAll: getAll,
-	postPurchase: postPurchase,
-	getHistory: getHistory,
-	deletePurchase: deletePurchase,
+	getAll,
+	postProduct,
+	getHistory,
+	deleteProduct,
+	getRoomInfo,
+	getMembers,
+	getExpense,
 };

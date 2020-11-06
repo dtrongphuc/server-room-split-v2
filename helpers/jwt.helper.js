@@ -1,19 +1,13 @@
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
 
 // Tạo token
 let generateToken = (user, secretSignature, tokenLife) => {
 	return new Promise((resolve, reject) => {
-		const userData = {
-			_id: user._id,
-			realname: user.realname,
-			room: user.room,
-		};
-
 		jwt.sign(
-			{ data: userData },
+			{ data: user },
 			secretSignature,
 			{
-				algorithm: "HS256",
+				algorithm: 'HS256',
 				expiresIn: tokenLife,
 			},
 			(error, token) => {
@@ -35,6 +29,6 @@ let verifyToken = (token, secretKey) => {
 };
 
 module.exports = {
-	generateToken: generateToken,
-	verifyToken: verifyToken,
+	generateToken,
+	verifyToken,
 };

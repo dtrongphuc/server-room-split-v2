@@ -12,7 +12,7 @@ exports.postLogin = async (req, res, next) => {
 
 	let user = await User.findOne({ username: username });
 	if (!user) {
-		return res.status(403).send({
+		return res.status(403).json({
 			success: false,
 			error: {
 				message: 'Tài khoản chưa tồn tại .',
@@ -23,7 +23,7 @@ exports.postLogin = async (req, res, next) => {
 	const match = await bcrypt.compare(password, user.password);
 
 	if (!match) {
-		return res.status(403).send({
+		return res.status(403).json({
 			success: false,
 			error: {
 				message: 'Tên tài khoản hoặc mật khẩu chưa đúng.',
@@ -42,10 +42,10 @@ exports.postRegister = (req, res, next) => {
 	try {
 		User.findOne({ username: username }).then((user) => {
 			if (user) {
-				return res.status(406).send({
+				return res.status(406).json({
 					success: false,
 					error: {
-						message: 'Tên tài khoản đã tồn tại.',
+						message: 'Tên tài khoản đã tồn tại',
 					},
 				});
 			} else if (
@@ -54,14 +54,14 @@ exports.postRegister = (req, res, next) => {
 				isEmpty(repassword) ||
 				isEmpty(realname)
 			) {
-				return res.status(406).send({
+				return res.status(406).json({
 					success: false,
 					error: {
-						message: 'Dữ liệu rỗng.',
+						message: 'Dữ liệu rỗng',
 					},
 				});
 			} else if (password != repassword) {
-				return res.status(406).send({
+				return res.status(406).json({
 					success: false,
 					error: {
 						message: 'Mật khẩu xác nhận không đúng.',
@@ -72,7 +72,7 @@ exports.postRegister = (req, res, next) => {
 			}
 		});
 	} catch (error) {
-		return res.status(403).send({
+		return res.status(403).json({
 			success: false,
 			error: {
 				message: `${error}` || 'Error.',
@@ -83,13 +83,14 @@ exports.postRegister = (req, res, next) => {
 
 exports.postJoinRoom = (req, res, next) => {
 	try {
-		let roomCode = req.body.code;
+		let { roomCode } = req.body;
+		console.log(roomCode);
 		Room.findOne({ code: roomCode }).then((room) => {
 			if (!room) {
-				return res.status(404).send({
+				return res.status(404).json({
 					success: false,
 					error: {
-						message: 'Room code is not exist.',
+						message: 'Mã phòng không tồn tại',
 					},
 				});
 			}
@@ -106,7 +107,7 @@ exports.postCreateRoom = (req, res, next) => {
 		let price = req.body.price;
 
 		if (isEmpty(roomName) || isEmpty(price.toString())) {
-			return res.status(403).send({
+			return res.status(403).json({
 				success: false,
 				error: {
 					message: 'Dữ liệu rỗng.',

@@ -54,7 +54,7 @@ let logout = async (req, res) => {
 
 	res.clearCookie('accessToken');
 	res.clearCookie('refreshToken');
-	res.status(200).send({ success: true });
+	res.status(200).json({ success: true });
 };
 
 let login = async (req, res) => {
@@ -116,19 +116,18 @@ let login = async (req, res) => {
 						res.setHeader('Cache-Control', 'private');
 
 						res.cookie('refreshToken', refreshToken, {
-							httpOnly: true,
-							maxAge: 864000000 * 365,
+							// httpOnly: true,
+							maxAge: parseInt(process.env.REFRESH_TOKEN_LIFE),
+							// maxAge: 864000000 * 365,
 							sameSite: 'none',
-							//secure: true,
-							//domain: process.env.DOMAIN,
+							// secure: true,
 						});
 
 						res.cookie('accessToken', accessToken, {
-							httpOnly: true,
+							// httpOnly: true,
 							maxAge: parseInt(process.env.COOKIE_LIFE),
 							sameSite: 'none',
-							//secure: true,
-							//domain: process.env.DOMAIN,
+							// secure: true,
 						});
 						return res.status(200).json({
 							success: true,
@@ -140,11 +139,11 @@ let login = async (req, res) => {
 			.catch(async (error) => {
 				await User.deleteOne({ username: req.body.username });
 
-				return res.status(403).send({
+				return res.status(403).json({
 					success: false,
 					error: {
 						message:
-							'Tài khoản chưa tham gia phòng, vui lòng đăng ký lại.',
+							'Tài khoản chưa tham gia phòng, vui lòng đăng ký lại',
 					},
 				});
 			});
@@ -167,21 +166,21 @@ let register = async (req, res) => {
 
 		let user = await User.findOne({ username }, '-password');
 
-		return res.status(200).send({
+		return res.status(200).json({
 			user: {
 				...user.toObject(),
 				room: '',
 			},
 			success: true,
 			error: {
-				messeage: 'Đăng ký thành công.',
+				messeage: 'Đăng ký thành công',
 			},
 		});
 	} catch (error) {
-		return res.status(403).send({
+		return res.status(403).json({
 			success: false,
 			error: {
-				messeage: error || 'Đã có lỗi xảy ra.',
+				messeage: error || 'Đã có lỗi xảy ra',
 			},
 		});
 	}
@@ -193,8 +192,11 @@ let joinRoom = (req, res) => {
 
 		Room.findOne({ code: roomCode }).then(async (room) => {
 			if (!room) {
-				return res.status(403).send({
-					messeage: 'Mã phòng không tồn tại.',
+				return res.status(403).json({
+					success: false,
+					error: {
+						messeage: 'Mã phòng không tồn tại',
+					},
 				});
 			}
 
@@ -267,10 +269,10 @@ let createRoom = async (req, res) => {
 			});
 		}
 	} catch (error) {
-		return res.status(500).send({
+		return res.status(500).json({
 			success: false,
 			error: {
-				message: 'Có lỗi xảy ra.',
+				message: 'Có lỗi xảy ra',
 			},
 		});
 	}
@@ -295,17 +297,17 @@ let refreshToken = async (req, res) => {
 						accessTokenLife
 					);
 					res.cookie('accessToken', accessToken, {
-						httpOnly: true,
+						// httpOnly: true,
 						maxAge: parseInt(process.env.COOKIE_LIFE),
+						sameSite: 'none',
+						// secure: true,
 					});
 
 					return res.status(200).json({ accessToken });
 				});
-
-			console.log('renew access token');
 		} catch (error) {
-			res.status(403).send({
-				messeage: 'Invalid refresh token.',
+			res.status(403).json({
+				messeage: 'Refresh token không hợp lệ',
 			});
 		}
 	} else {
@@ -313,8 +315,28 @@ let refreshToken = async (req, res) => {
 	}
 };
 
-let isAuth = (req, res) => {
-	res.status(200).send({ success: true });
+let isAuth = async (req, res) => {
+	const { accessToken } = req.cookies;
+	try {
+		const decoded = await jwtHelper.verifyToken(
+			accessToken,
+			accessTokenSecret
+		);
+		req.jwtDecoded = decoded;
+		return res.status(200).json({
+			success: true,
+			user: {
+				...decoded.data,
+			},
+		});
+	} catch (error) {
+		return res.status(403).json({
+			success: false,
+			error: {
+				message: 'Chưa xác thực',
+			},
+		});
+	}
 };
 
 module.exports = {

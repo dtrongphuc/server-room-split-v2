@@ -1,4 +1,4 @@
-exports.postPurchase = (req, res, next) => {
+exports.postProduct = (req, res, next) => {
 	const {
 		userID,
 		productName,
@@ -17,7 +17,7 @@ exports.postPurchase = (req, res, next) => {
 		return res.status(403).send({
 			success: false,
 			error: {
-				message: "Input is empty.",
+				message: 'Input is empty.',
 			},
 		});
 	}

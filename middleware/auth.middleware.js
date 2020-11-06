@@ -1,50 +1,42 @@
-const jwtHelper = require("../helpers/jwt.helper");
+const jwtHelper = require('../helpers/jwt.helper');
 
 const accessTokenSecret =
-	process.env.ACCESS_TOKEN_SECRET || "access-token-secret";
+	process.env.ACCESS_TOKEN_SECRET || 'access-token-secret';
 
 exports.isAuth = async (req, res, next) => {
-	const tokenFromClient =
-		req.headers["cookie"] ||
-		req.body.token ||
-		req.query.token ||
-		req.headers["x-access-token"];
-	const refreshTokenFromClient =
-		tokenFromClient && tokenFromClient.split(/[\=\;]/)[1];
-	const accessTokenFromClient =
-		tokenFromClient && tokenFromClient.split(/[\=\;]/)[3];
-	if (tokenFromClient && accessTokenFromClient) {
+	const { accessToken, refreshToken } = req.cookies;
+	if (accessToken) {
 		try {
 			// Giải mã xem token có hợp lệ không ?
 			const decoded = await jwtHelper.verifyToken(
-				accessTokenFromClient,
+				accessToken,
 				accessTokenSecret
 			);
 			// Lưu thông tin giải mã được vào đối tượng req
 			req.jwtDecoded = decoded;
 			next();
 		} catch (error) {
-			return res.status(401).send({
+			return res.status(403).json({
 				success: false,
 				error: {
-					message: "Unauthorized.",
+					message: 'Chưa xác thực',
 				},
 			});
 		}
-	} else if (refreshTokenFromClient) {
-		return res.status(307).send({
+	} else if (refreshToken) {
+		return res.status(401).json({
 			success: false,
 			error: {
-				message: "Token expired.",
+				message: 'Token expired',
 			},
 		});
 	} else {
 		// Không tồn tại token trong request
-		console.log("Không tồn tại token trong request");
-		return res.status(401).send({
+		console.log('Không tồn tại token trong request');
+		return res.status(403).json({
 			success: false,
 			error: {
-				message: "No token provided.",
+				message: 'No token provided',
 			},
 		});
 	}
