@@ -33,23 +33,28 @@ let createBill = async (username, roomId, month, year) => {
 	}
 };
 
-let logout = async (req, res) => {
-	const TokenFromClient = req.headers['cookie'];
-	const refreshTokenFormClient =
-		TokenFromClient && TokenFromClient.split(/[\=\;]/)[1];
+let saveToken = async (accessToken, refreshToken) => {
+	try {
+		if ((!accessToken, !refreshToken)) {
+			throw new Error('Không đủ dữ liệu');
+		}
 
-	if (refreshTokenFormClient) {
-		await Token.findOneAndUpdate(
-			{},
-			{
-				$pull: {
-					tokenList: {
-						$elemMatch: refreshToken,
-					},
-				},
-			},
-			{ useFindAndModify: false }
-		);
+		await Token.create({
+			accessToken,
+			refreshToken,
+		});
+	} catch (err) {}
+};
+
+let logout = async (req, res) => {
+	const { accessToken, refreshToken } = req.cookies;
+	try {
+		if (!!refreshToken) {
+			await Token.deleteOne({ refreshToken });
+		}
+	} catch (err) {
+		console.log(err);
+		return res.status(500).json(err);
 	}
 
 	res.clearCookie('accessToken');
@@ -88,46 +93,22 @@ let login = async (req, res) => {
 				Promise.all([accessToken, refreshToken]).then(
 					async (values) => {
 						[accessToken, refreshToken] = values;
-						let token = await Token.findOne({});
-						let tokenList = {};
-						if (!token) {
-							await Token.create({
-								tokenList: [],
-							});
-						}
-
-						tokenList[refreshToken] = {
-							accessToken,
-							refreshToken,
-						};
-
-						await Token.findOneAndUpdate(
-							{},
-							{
-								$push: {
-									tokenList: {
-										$each: [tokenList],
-									},
-								},
-							},
-							{ useFindAndModify: false }
-						);
+						await saveToken(accessToken, refreshToken);
 
 						res.setHeader('Cache-Control', 'private');
 
 						res.cookie('refreshToken', refreshToken, {
-							// httpOnly: true,
+							httpOnly: true,
 							maxAge: parseInt(process.env.REFRESH_TOKEN_LIFE),
-							// maxAge: 864000000 * 365,
 							sameSite: 'none',
-							// secure: true,
+							secure: true,
 						});
 
 						res.cookie('accessToken', accessToken, {
-							// httpOnly: true,
+							httpOnly: true,
 							maxAge: parseInt(process.env.COOKIE_LIFE),
 							sameSite: 'none',
-							// secure: true,
+							secure: true,
 						});
 						return res.status(200).json({
 							success: true,
@@ -279,17 +260,14 @@ let createRoom = async (req, res) => {
 };
 
 let refreshToken = async (req, res) => {
-	const TokenFromClient = req.headers['cookie'];
-	const refreshTokenFormClient =
-		TokenFromClient && TokenFromClient.split(/[\=\;]/)[1];
-	const token = await Token.findOne({});
-	const tokenList = (token && token['tokenList']) || {};
+	const { refreshToken } = req.cookies;
+	const token = await Token.findOne({ refreshToken });
 
-	if (refreshTokenFormClient && tokenList[refreshTokenFormClient]) {
+	if (refreshToken && token) {
 		try {
 			var accessToken;
 			jwtHelper
-				.verifyToken(refreshTokenFormClient, refreshTokenSecret)
+				.verifyToken(refreshToken, refreshTokenSecret)
 				.then(async (decoded) => {
 					accessToken = await jwtHelper.generateToken(
 						decoded.data,
@@ -297,10 +275,10 @@ let refreshToken = async (req, res) => {
 						accessTokenLife
 					);
 					res.cookie('accessToken', accessToken, {
-						// httpOnly: true,
+						httpOnly: true,
 						maxAge: parseInt(process.env.COOKIE_LIFE),
 						sameSite: 'none',
-						// secure: true,
+						secure: true,
 					});
 
 					return res.status(200).json({ accessToken });
@@ -340,11 +318,11 @@ let isAuth = async (req, res) => {
 };
 
 module.exports = {
-	login: login,
-	logout: logout,
-	register: register,
-	joinRoom: joinRoom,
-	createRoom: createRoom,
-	refreshToken: refreshToken,
-	isAuth: isAuth,
+	login,
+	logout,
+	register,
+	joinRoom,
+	createRoom,
+	refreshToken,
+	isAuth,
 };

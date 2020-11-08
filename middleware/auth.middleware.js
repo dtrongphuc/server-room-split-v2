@@ -23,7 +23,7 @@ exports.isAuth = async (req, res, next) => {
 				},
 			});
 		}
-	} else if (refreshToken) {
+	} else if (!!refreshToken) {
 		return res.status(401).json({
 			success: false,
 			error: {
