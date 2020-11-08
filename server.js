@@ -12,7 +12,7 @@ const initAuthAPIs = require('./routes/api-auth.route');
 const initMainAPIs = require('./routes/api-main.route');
 
 mongoose
-	.connect(process.env.MONGO_URI, {
+	.connect(process.env.MONGO_URL, {
 		useNewUrlParser: true,
 		useUnifiedTopology: true,
 	})
