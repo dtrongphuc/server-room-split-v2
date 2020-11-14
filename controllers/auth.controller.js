@@ -98,17 +98,17 @@ let login = async (req, res) => {
 						res.setHeader('Cache-Control', 'private');
 
 						res.cookie('refreshToken', refreshToken, {
-							httpOnly: true,
+							// httpOnly: true,
 							maxAge: parseInt(process.env.REFRESH_TOKEN_LIFE),
 							sameSite: 'none',
-							secure: true,
+							// secure: true,
 						});
 
 						res.cookie('accessToken', accessToken, {
-							httpOnly: true,
+							// httpOnly: true,
 							maxAge: parseInt(process.env.COOKIE_LIFE),
 							sameSite: 'none',
-							secure: true,
+							// secure: true,
 						});
 						return res.status(200).json({
 							success: true,
@@ -275,10 +275,10 @@ let refreshToken = async (req, res) => {
 						accessTokenLife
 					);
 					res.cookie('accessToken', accessToken, {
-						httpOnly: true,
+						// httpOnly: true,
 						maxAge: parseInt(process.env.COOKIE_LIFE),
 						sameSite: 'none',
-						secure: true,
+						// secure: true,
 					});
 
 					return res.status(200).json({ accessToken });
