@@ -5,6 +5,7 @@ const authValidation = require('../validate/auth.validate');
 const Router = express.Router();
 
 let initAPIs = (app) => {
+	Router.use(authMiddleware.headerConfig);
 	Router.post('/login', authValidation.postLogin, authController.login);
 	Router.post(
 		'/register',
