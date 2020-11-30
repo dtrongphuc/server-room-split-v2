@@ -5,7 +5,11 @@ var tokenSchema = new Schema(
 	{
 		accessToken: String,
 		refreshToken: String,
-		createdAt: { type: Date, default: Date.now },
+		createdAt: {
+			type: Date,
+			default: Date.now,
+			expires: parseInt(process.env.TOKEN_EXPIRES),
+		},
 	},
 	{ versionKey: false }
 );

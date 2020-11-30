@@ -99,14 +99,14 @@ let login = async (req, res) => {
 
 						res.cookie('refreshToken', refreshToken, {
 							httpOnly: true,
-							maxAge: parseInt(process.env.REFRESH_TOKEN_LIFE),
+							maxAge: parseInt(refreshTokenLife),
 							sameSite: 'none',
 							secure: true,
 						});
 
 						res.cookie('accessToken', accessToken, {
 							httpOnly: true,
-							maxAge: parseInt(process.env.COOKIE_LIFE),
+							maxAge: parseInt(accessTokenLife),
 							sameSite: 'none',
 							secure: true,
 						});
@@ -276,7 +276,7 @@ let refreshToken = async (req, res) => {
 					);
 					res.cookie('accessToken', accessToken, {
 						httpOnly: true,
-						maxAge: parseInt(process.env.COOKIE_LIFE),
+						maxAge: parseInt(accessTokenLife),
 						sameSite: 'none',
 						secure: true,
 					});
