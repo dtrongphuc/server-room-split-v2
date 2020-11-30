@@ -11,7 +11,7 @@ var tokenSchema = new Schema(
 			expires: parseInt(process.env.TOKEN_EXPIRES),
 		},
 	},
-	{ versionKey: false }
+	{ versionKey: false, useCreateIndex: true }
 );
 
 var Token = new mongooose.model('Token', tokenSchema, 'token');
