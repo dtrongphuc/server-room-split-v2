@@ -332,7 +332,10 @@ let getMembers = async (req, res) => {
 			});
 		}
 
-		let members = await User.find({ room: room._id }, '_id realname');
+		let members = await User.find(
+			{ room: room._id },
+			'_id realname active'
+		);
 		return res.status(200).send({
 			success: true,
 			members,
@@ -497,6 +500,28 @@ let getTotalExpense = async (req, res) => {
 	}
 };
 
+let updateAccountStatus = async (req, res) => {
+	try {
+		const { userId, isActive } = req.body;
+
+		await User.findByIdAndUpdate(
+			userId,
+			{
+				active: isActive,
+			},
+			{ useFindAndModify: false }
+		);
+
+		return res.status(200).json({
+			success: true,
+		});
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+		});
+	}
+};
+
 module.exports = {
 	getAll,
 	postProduct,
@@ -508,4 +533,5 @@ module.exports = {
 	getPriceOfMonthById,
 	getTotalExpense,
 	getPayById,
+	updateAccountStatus,
 };

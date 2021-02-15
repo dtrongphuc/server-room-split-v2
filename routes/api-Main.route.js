@@ -32,6 +32,7 @@ let initAPIs = (app) => {
 		mainController.postProduct
 	);
 	Router.post('/delete/product', mainController.deleteProduct);
+	Router.post('/update/active', mainController.updateAccountStatus);
 	return app.use('/api', Router);
 };
 

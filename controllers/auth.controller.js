@@ -77,6 +77,7 @@ let login = async (req, res) => {
 					username: data.username,
 					realname: data.realname,
 					room: data.room._id,
+					active: data.active,
 				};
 				accessToken = jwtHelper.generateToken(
 					decoded,
@@ -100,15 +101,15 @@ let login = async (req, res) => {
 						res.cookie('refreshToken', refreshToken, {
 							httpOnly: true,
 							maxAge: parseInt(refreshTokenLife),
-							sameSite: 'none',
-							secure: true,
+							// sameSite: 'none',
+							// secure: true,
 						});
 
 						res.cookie('accessToken', accessToken, {
 							httpOnly: true,
 							maxAge: parseInt(accessTokenLife),
-							sameSite: 'none',
-							secure: true,
+							// sameSite: 'none',
+							// secure: true,
 						});
 						return res.status(200).json({
 							success: true,
@@ -143,6 +144,7 @@ let register = async (req, res) => {
 			username,
 			realname,
 			password: hashPassword,
+			active: true,
 		});
 
 		let user = await User.findOne({ username }, '-password');
@@ -289,7 +291,12 @@ let refreshToken = async (req, res) => {
 			});
 		}
 	} else {
-		return res.status(500).json(error);
+		return res.status(500).json({
+			success: false,
+			error: {
+				message: 'Có lỗi xảy ra',
+			},
+		});
 	}
 };
 
@@ -301,10 +308,13 @@ let isAuth = async (req, res) => {
 			accessTokenSecret
 		);
 		req.jwtDecoded = decoded;
+		const userId = decoded.data._id;
+		const { active } = await User.findById(userId);
 		return res.status(200).json({
 			success: true,
 			user: {
 				...decoded.data,
+				active,
 			},
 		});
 	} catch (error) {
