@@ -101,15 +101,15 @@ let login = async (req, res) => {
 						res.cookie('refreshToken', refreshToken, {
 							httpOnly: true,
 							maxAge: parseInt(refreshTokenLife),
-							// sameSite: 'none',
-							// secure: true,
+							sameSite: 'none',
+							secure: true,
 						});
 
 						res.cookie('accessToken', accessToken, {
 							httpOnly: true,
 							maxAge: parseInt(accessTokenLife),
-							// sameSite: 'none',
-							// secure: true,
+							sameSite: 'none',
+							secure: true,
 						});
 						return res.status(200).json({
 							success: true,
